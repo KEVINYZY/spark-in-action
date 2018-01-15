@@ -23,6 +23,7 @@ object ChiSqSelector {
       .setLabelCol("clicked")
       .setOutputCol("selectedFeatures")
 
+
     val result = selector.fit(df).transform(df)
 
     println(s"ChiSqSelector output with top ${selector.getNumTopFeatures} features selected")

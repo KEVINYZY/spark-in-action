@@ -27,7 +27,7 @@ object VectorSlicer {
 
     // 如果index和name重复，会抛出异常
     // Exception in thread "main" java.lang.IllegalArgumentException: requirement failed: VectorSlicer requires indices and names to be disjoint sets of features, but they overlap. indices: [2]. names: [2:f3]
-    slicer.setIndices(Array(1)).setNames(Array("f3"))
+    slicer.setIndices(Array(1))//.setNames(Array("f3"))
     // or slicer.setIndices(Array(1, 2)), or slicer.setNames(Array("f2", "f3"))
 
     val output = slicer.transform(dataset)

@@ -19,7 +19,7 @@ object ImputerTest {
     val imputer = new Imputer()
       .setInputCols(Array("a", "b"))
       .setOutputCols(Array("out_a", "out_b"))
-      .setMissingValue(Double.NaN)//指定针对哪个值进行设置，默认是Double.NaN
+      .setMissingValue(1.0)//指定针对哪个值进行设置，默认是Double.NaN
       .setStrategy("mean")//mean 或者 median
 
     val model = imputer.fit(df)

@@ -2,7 +2,7 @@ package xingoo.ml.extraction
 
 import org.apache.spark.ml.feature.Word2Vec
 import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.{Row, SaveMode, SparkSession}
 
 object Word2VecTest {
   def main(args: Array[String]): Unit = {
@@ -18,7 +18,7 @@ object Word2VecTest {
     ).map(Tuple1.apply)).toDF("text")
 
     val testDF = spark.createDataFrame(Seq(
-      "猴子".split(" "),
+      "猴子 呵呵 你好 苹果".split(" "),
       "海龙".split(" "),
       "香蕉".split(" "),
       "苹果".split(" ")
@@ -31,9 +31,12 @@ object Word2VecTest {
       .setVectorSize(3)
       .setMinCount(0)
     val model = word2Vec.fit(documentDF)
+    model.getVectors
 
     val result = model.transform(testDF)
     result.collect().foreach { case Row(text: Seq[_], features: Vector) =>
       println(s"Text: [${text.mkString(", ")}] => \nVector: $features\n") }
+
+    result.write.mode(SaveMode.Overwrite)
   }
 }
