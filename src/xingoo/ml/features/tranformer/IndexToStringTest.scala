@@ -1,19 +1,15 @@
 package xingoo.ml.features.tranformer
 
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.ml.attribute.Attribute
 import org.apache.spark.ml.feature.{IndexToString, StringIndexer}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.types._
 
 object IndexToStringTest {
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder().master("local[*]").appName("dct").getOrCreate()
     spark.sparkContext.setLogLevel("WARN")
-
-    val df1 = spark.createDataFrame(Seq(
-      (0, "你",0.0),
-      (1, "我",1.0),
-      (2, "它",2.0)
-    )).toDF("id", "category","categoryIndex")
 
     val df = spark.createDataFrame(Seq(
       (0, "a"),
@@ -27,30 +23,39 @@ object IndexToStringTest {
     val indexer = new StringIndexer()
       .setInputCol("category")
       .setOutputCol("categoryIndex")
-      .fit(df)
       .setHandleInvalid("skip")
+      .fit(df)
     val indexed = indexer.transform(df)
 
-    println(s"Transformed string column '${indexer.getInputCol}' " +
-      s"to indexed column '${indexer.getOutputCol}'")
     indexed.show()
 
-    val inputColSchema = indexed.schema(indexer.getOutputCol)
-    println(s"StringIndexer will store labels in output column metadata: " +
-      s"${Attribute.fromStructField(inputColSchema).toString}\n")
+    val df2 = spark.createDataFrame(Seq(
+      (0, 2.0),
+      (1, 1.0),
+      (2, 1.0),
+      (3, 0.0)
+    )).toDF("id", "index").select(col("*"),col("index").as("formated_index", indexed.schema("categoryIndex").metadata))
 
     val converter = new IndexToString()
-      .setInputCol("categoryIndex")
-      .setOutputCol("originalCategory")
+      .setInputCol("formated_index")
+      .setOutputCol("origin_col")
 
-    val converted = converter.transform(indexed)
-    val converted1 = converter.transform(df1)
+    val converted = converter.transform(df2)
+    converted.show(false)
 
-    //converter.getLabels.foreach(println)
+    val df3 = spark.createDataFrame(Seq(
+      (0, 2.0),
+      (1, 1.0),
+      (2, 1.0),
+      (3, 0.0)
+    )).toDF("id", "index")
 
-    println(s"Transformed indexed column '${converter.getInputCol}' back to original string " +
-      s"column '${converter.getOutputCol}' using labels in metadata")
-    converted.select("id", "categoryIndex", "originalCategory").show()
-    //converted1.select("id", "categoryIndex", "originalCategory").show()
+    val converter2 = new IndexToString()
+      .setInputCol("index")
+      .setOutputCol("origin_col")
+      .setLabels(indexed.schema("categoryIndex").metadata.getMetadata("ml_attr").getStringArray("vals"))
+
+    val converted2 = converter2.transform(df3)
+    converted2.show(false)
   }
 }
